@@ -17,6 +17,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "psopt.h"
+#include "urdfRead.h"
 
 //////////////////////////////////////////////////////////////////////////
 ///////////////////  Define the end point (Mayer) cost function //////////
@@ -26,7 +27,7 @@ adouble endpoint_cost(adouble* initial_states, adouble* final_states,
                       adouble* parameters,adouble& t0, adouble& tf,
                       adouble* xad, int iphase, Workspace* workspace)
 {
-    return tf;
+    return 0.0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,7 +38,8 @@ adouble integrand_cost(adouble* states, adouble* controls,
                        adouble* parameters, adouble& time, adouble* xad,
                        int iphase, Workspace* workspace)
 {
-    return  0.0;
+    adouble u = controls[0];
+    return  u * u;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -48,30 +50,21 @@ void dae(adouble* derivatives, adouble* path, adouble* states,
          adouble* controls, adouble* parameters, adouble& time,
          adouble* xad, int iphase, Workspace* workspace)
 {
-   adouble xdot, ydot, vdot;
+    adouble xdot, ydot, vdot;
+    vector<adouble> x{states[0], states[1], states[2], states[3], states[4], states[5], states[6], states[7]};
 
-   adouble x1 = states[ 0 ];
-   adouble x2 = states[ 1 ];
-   adouble x3 = states[ 2 ];
-   adouble x4 = states[ 3 ];
+    adouble u = controls[ 0 ];
+    VectorNd QDDot;
+    urdfRead(x, u, QDDot);
 
-   adouble u1 = controls[ 0 ];
-   adouble u2 = controls[ 1 ];
-
-   adouble num1 =  sin(x3)*( (9.0/4.0)*cos(x3)*x1*x1+2*x2*x2 )
-                   + (4.0/3.0)*(u1-u2)-(3.0/2.0)*cos(x3)*u2;
-
-   adouble num2 =  -(sin(x3)*((7.0/2.0)*x1*x1+(9.0/4.0)*cos(x3)*x2*x2)
-                   -(7.0/3.0)*u2+(3.0/2.0)*cos(x3)*(u1-u2));
-
-   adouble den  =  31.0/36.0 + 9.0/4.0*pow(sin(x3),2);
-
-   derivatives[ 0 ] = num1/den;
-   derivatives[ 1 ] = num2/den;
-   derivatives[ 2 ] = x2 - x1;
-   derivatives[ 3 ] = x1;
-
-
+    derivatives[ 0 ] = x[4];
+    derivatives[ 1 ] = x[5];
+    derivatives[ 2 ] = x[6];
+    derivatives[ 3 ] = x[7];
+    derivatives[ 4 ] = QDDot[5];
+    derivatives[ 5 ] = QDDot[0];
+    derivatives[ 6 ] = QDDot[2];
+    derivatives[ 7 ] = QDDot[10];
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -86,19 +79,22 @@ void events(adouble* e, adouble* initial_states, adouble* final_states,
    adouble x20 = initial_states[ 1 ];
    adouble x30 = initial_states[ 2 ];
    adouble x40 = initial_states[ 3 ];
-   adouble x1f = final_states[ 0 ];
-   adouble x2f = final_states[ 1 ];
-   adouble x3f = final_states[ 2 ];
-   adouble x4f = final_states[ 3 ];
+   adouble x50 = initial_states[ 4 ];
+   adouble x60 = initial_states[ 5 ];
+   adouble x70 = initial_states[ 6 ];
+   adouble x80 = initial_states[ 7 ];
+   adouble pzf = final_states[ 2 ];
+   adouble pzf_dot = final_states[ 6 ];
 
-   e[ 0 ] = x10;
-   e[ 1 ] = x20;
-   e[ 2 ] = x30;
-   e[ 3 ] = x40;
-   e[ 4 ] = x1f;
-   e[ 5 ] = x2f;
-   e[ 6 ] = x3f;
-   e[ 7 ] = x4f;
+   e[ 0 ] = x20;
+   e[ 1 ] = x30;
+   e[ 2 ] = x40;
+   e[ 3 ] = x50;
+   e[ 4 ] = x60 - flapping_model::v0 * cos(x10);
+   e[ 5 ] = x70 - flapping_model::v0 * sin(x10);
+   e[ 6 ] = x80;
+   e[ 7 ] = pzf - flapping_model::target_height;
+   e[ 8 ] = pzf_dot;
 
 }
 
@@ -150,9 +146,9 @@ int main(void)
 /////////   Define phase related information & do level 2 setup /////////////
 /////////////////////////////////////////////////////////////////////////////
 
-    problem.phases(1).nstates   				= 4;
-    problem.phases(1).ncontrols 				= 2;
-    problem.phases(1).nevents   				= 8;
+    problem.phases(1).nstates   				= 8;
+    problem.phases(1).ncontrols 				= 1;
+    problem.phases(1).nevents   				= 9;
     problem.phases(1).npath     				= 0;
     problem.phases(1).nodes               << 40;
 
@@ -174,17 +170,22 @@ int main(void)
     problem.phases(1).bounds.lower.states(1) = -2.0;
     problem.phases(1).bounds.lower.states(2) = -2.0;
     problem.phases(1).bounds.lower.states(3) = -2.0;
+    problem.phases(1).bounds.lower.states(4) = -2.0;
+    problem.phases(1).bounds.lower.states(5) = -2.0;
+    problem.phases(1).bounds.lower.states(6) = -2.0;
+    problem.phases(1).bounds.lower.states(7) = -2.0;
 
     problem.phases(1).bounds.upper.states(0) = 2.0;
     problem.phases(1).bounds.upper.states(1) = 2.0;
     problem.phases(1).bounds.upper.states(2) = 2.0;
     problem.phases(1).bounds.upper.states(3) = 2.0;
+    problem.phases(1).bounds.upper.states(4) = 2.0;
+    problem.phases(1).bounds.upper.states(5) = 2.0;
+    problem.phases(1).bounds.upper.states(6) = 2.0;
+    problem.phases(1).bounds.upper.states(7) = 2.0;
 
     problem.phases(1).bounds.lower.controls(0) = -1.0;
-    problem.phases(1).bounds.lower.controls(1) = -1.0;
-
     problem.phases(1).bounds.upper.controls(0) = 1.0;
-    problem.phases(1).bounds.upper.controls(1) = 1.0;
 
     problem.phases(1).bounds.lower.events(0) = 0.0;
     problem.phases(1).bounds.lower.events(1) = 0.0;
@@ -192,10 +193,19 @@ int main(void)
     problem.phases(1).bounds.lower.events(3) = 0.0;
     problem.phases(1).bounds.lower.events(4) = 0.0;
     problem.phases(1).bounds.lower.events(5) = 0.0;
-    problem.phases(1).bounds.lower.events(6) = 0.5;
-    problem.phases(1).bounds.lower.events(7) = 0.522;
+    problem.phases(1).bounds.lower.events(6) = 0.0;
+    problem.phases(1).bounds.lower.events(7) = -0.2;
+    problem.phases(1).bounds.lower.events(8) = -0.1;
 
-    problem.phases(1).bounds.upper.events = problem.phases(1).bounds.lower.events;
+    problem.phases(1).bounds.upper.events(0) = 0.0;
+    problem.phases(1).bounds.upper.events(1) = 0.0;
+    problem.phases(1).bounds.upper.events(2) = 0.5;
+    problem.phases(1).bounds.upper.events(3) = 0.0;
+    problem.phases(1).bounds.upper.events(4) = 0.0;
+    problem.phases(1).bounds.upper.events(5) = 0.0;
+    problem.phases(1).bounds.upper.events(6) = 0.0;
+    problem.phases(1).bounds.upper.events(7) = 0.2;
+    problem.phases(1).bounds.upper.events(8) = 0.1;
 
 
 
@@ -224,14 +234,18 @@ int main(void)
 ////////////////////////////////////////////////////////////////////////////
 
 
-    MatrixXd x0(4,40);
+    MatrixXd x0(8,40);
 
     x0 <<  linspace(0.0,0.0, 40),
            linspace(0.0,0.0, 40),
            linspace(0.5,0.5, 40),
-           linspace(0.522,0.522, 40);
+           linspace(0.522,0.522, 40),
+           linspace(0.0,0.0, 40),
+           linspace(0.0,0.0, 40),
+           linspace(0.0,0.0, 40),
+           linspace(0.0,0.0, 40);
 
-    problem.phases(1).guess.controls       = zeros(2,40);
+    problem.phases(1).guess.controls       = zeros(1,40);
     problem.phases(1).guess.states         = x0;
     problem.phases(1).guess.time           = linspace(0.0, 3.0, 40);
 
@@ -245,6 +259,7 @@ int main(void)
     algorithm.derivatives                 = "automatic";
     algorithm.nlp_iter_max                = 1000;
     algorithm.nlp_tolerance               = 1.e-6;
+    algorithm.collocation_method          = "Hermite-Simpson";
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////  Now call PSOPT to solve the problem   /////////////////
