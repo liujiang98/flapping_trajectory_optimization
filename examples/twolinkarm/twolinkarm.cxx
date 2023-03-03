@@ -18,7 +18,7 @@
 
 #include "psopt.h"
 #include "urdfRead.h"
-
+int i = 0;
 //////////////////////////////////////////////////////////////////////////
 ///////////////////  Define the end point (Mayer) cost function //////////
 //////////////////////////////////////////////////////////////////////////
@@ -51,17 +51,20 @@ void dae(adouble* derivatives, adouble* path, adouble* states,
          adouble* xad, int iphase, Workspace* workspace)
 {
     adouble xdot, ydot, vdot;
-    vector<adouble> x{states[0], states[1], states[2], states[3], states[4], states[5], states[6], states[7]};
+    vector<adouble> x{states[0], states[1], states[2], 
+                    states[3], states[4], states[5], states[6], states[7]};
 
     adouble u = controls[ 0 ];
     VectorNd QDDot;
-    urdfRead(x, u, QDDot);
-
+    adouble t = time;
+    urdfRead(x, u, QDDot, t);
+    ++i;
+    // std::cout << ++i << std::endl;
     derivatives[ 0 ] = x[4];
     derivatives[ 1 ] = x[5];
     derivatives[ 2 ] = x[6];
     derivatives[ 3 ] = x[7];
-    derivatives[ 4 ] = QDDot[5];
+    derivatives[ 4 ] = QDDot[4];
     derivatives[ 5 ] = QDDot[0];
     derivatives[ 6 ] = QDDot[2];
     derivatives[ 7 ] = QDDot[10];
@@ -128,7 +131,7 @@ int main(void)
 ///////////////////  Register problem name  ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-    problem.name        						= "Two link robotic arm";
+    problem.name        					= "Two link robotic arm";
 
     problem.outfilename                 	= "twolink.txt";
 
@@ -136,7 +139,7 @@ int main(void)
 ////////////  Define problem level constants & do level 1 setup ////////////
 ////////////////////////////////////////////////////////////////////////////
 
-    problem.nphases   							= 1;
+    problem.nphases   						= 1;
     problem.nlinkages                   	= 0;
 
     psopt_level1_setup(problem);
@@ -150,7 +153,7 @@ int main(void)
     problem.phases(1).ncontrols 				= 1;
     problem.phases(1).nevents   				= 9;
     problem.phases(1).npath     				= 0;
-    problem.phases(1).nodes               << 40;
+    problem.phases(1).nodes                     << 40;
 
     psopt_level2_setup(problem, algorithm);
 
@@ -166,30 +169,30 @@ int main(void)
 ///////////////////  Enter problem bounds information //////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-    problem.phases(1).bounds.lower.states(0) = -2.0;
-    problem.phases(1).bounds.lower.states(1) = -2.0;
-    problem.phases(1).bounds.lower.states(2) = -2.0;
+    problem.phases(1).bounds.lower.states(0) = -3.14;
+    problem.phases(1).bounds.lower.states(1) = 0.0;
+    problem.phases(1).bounds.lower.states(2) = 0.0;
     problem.phases(1).bounds.lower.states(3) = -2.0;
-    problem.phases(1).bounds.lower.states(4) = -2.0;
-    problem.phases(1).bounds.lower.states(5) = -2.0;
-    problem.phases(1).bounds.lower.states(6) = -2.0;
-    problem.phases(1).bounds.lower.states(7) = -2.0;
+    problem.phases(1).bounds.lower.states(4) = -10.0;
+    problem.phases(1).bounds.lower.states(5) = -10.0;
+    problem.phases(1).bounds.lower.states(6) = -10.0;
+    problem.phases(1).bounds.lower.states(7) = -10.0;
 
-    problem.phases(1).bounds.upper.states(0) = 2.0;
-    problem.phases(1).bounds.upper.states(1) = 2.0;
-    problem.phases(1).bounds.upper.states(2) = 2.0;
+    problem.phases(1).bounds.upper.states(0) = 3.14;
+    problem.phases(1).bounds.upper.states(1) = 12.0;
+    problem.phases(1).bounds.upper.states(2) = 12.0;
     problem.phases(1).bounds.upper.states(3) = 2.0;
-    problem.phases(1).bounds.upper.states(4) = 2.0;
-    problem.phases(1).bounds.upper.states(5) = 2.0;
-    problem.phases(1).bounds.upper.states(6) = 2.0;
-    problem.phases(1).bounds.upper.states(7) = 2.0;
+    problem.phases(1).bounds.upper.states(4) = 10.0;
+    problem.phases(1).bounds.upper.states(5) = 10.0;
+    problem.phases(1).bounds.upper.states(6) = 10.0;
+    problem.phases(1).bounds.upper.states(7) = 10.0;
 
     problem.phases(1).bounds.lower.controls(0) = -1.0;
     problem.phases(1).bounds.upper.controls(0) = 1.0;
 
     problem.phases(1).bounds.lower.events(0) = 0.0;
     problem.phases(1).bounds.lower.events(1) = 0.0;
-    problem.phases(1).bounds.lower.events(2) = 0.5;
+    problem.phases(1).bounds.lower.events(2) = 0.0;
     problem.phases(1).bounds.lower.events(3) = 0.0;
     problem.phases(1).bounds.lower.events(4) = 0.0;
     problem.phases(1).bounds.lower.events(5) = 0.0;
@@ -199,7 +202,7 @@ int main(void)
 
     problem.phases(1).bounds.upper.events(0) = 0.0;
     problem.phases(1).bounds.upper.events(1) = 0.0;
-    problem.phases(1).bounds.upper.events(2) = 0.5;
+    problem.phases(1).bounds.upper.events(2) = 0.0;
     problem.phases(1).bounds.upper.events(3) = 0.0;
     problem.phases(1).bounds.upper.events(4) = 0.0;
     problem.phases(1).bounds.upper.events(5) = 0.0;
@@ -221,11 +224,11 @@ int main(void)
 ////////////////////////////////////////////////////////////////////////////
 
 
-    problem.integrand_cost 				= &integrand_cost;
+    problem.integrand_cost 				    = &integrand_cost;
     problem.endpoint_cost 					= &endpoint_cost;
-    problem.dae 								= &dae;
+    problem.dae 							= &dae;
     problem.events 							= &events;
-    problem.linkages							= &linkages;
+    problem.linkages						= &linkages;
 
 
 
@@ -236,18 +239,18 @@ int main(void)
 
     MatrixXd x0(8,40);
 
-    x0 <<  linspace(0.0,0.0, 40),
-           linspace(0.0,0.0, 40),
-           linspace(0.5,0.5, 40),
-           linspace(0.522,0.522, 40),
-           linspace(0.0,0.0, 40),
-           linspace(0.0,0.0, 40),
-           linspace(0.0,0.0, 40),
-           linspace(0.0,0.0, 40);
+    x0 <<  linspace(0.0, 0.0, 40),
+           linspace(0.0, 0.0, 40),
+           linspace(0.0, 0.0, 40),
+           linspace(0.0, 0.0, 40),
+           linspace(0.0, 0.0, 40),
+           linspace(0.0, flapping_model::v0, 40),
+           linspace(0.0, flapping_model::v0, 40),
+           linspace(0.0, 0.0, 40);
 
     problem.phases(1).guess.controls       = zeros(1,40);
     problem.phases(1).guess.states         = x0;
-    problem.phases(1).guess.time           = linspace(0.0, 3.0, 40);
+    problem.phases(1).guess.time           = linspace(0.0, 10.0, 40);
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////  Enter algorithm options  //////////////////////////////
@@ -274,7 +277,7 @@ int main(void)
     x 		= solution.get_states_in_phase(1);
     u 		= solution.get_controls_in_phase(1);
     t 		= solution.get_time_in_phase(1);
-
+    std::cout << "///////////////////////////use dae function " << i << std::endl;
 ////////////////////////////////////////////////////////////////////////////
 ///////////  Save solution data to files if desired ////////////////////////
 ////////////////////////////////////////////////////////////////////////////
