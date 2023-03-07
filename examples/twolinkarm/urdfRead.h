@@ -28,8 +28,8 @@ namespace flapping_model{
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
 	const Vector3d tail_pos{-0.10905, 0.0, 0.02466};
 	const double v0 = 9.0;
-    const double target_height = 3.0;
-	const double f = 10.0; // 扑翼频率
+    const double target_height = 4.0;
+	const double f = 7.0; // 扑翼频率
 };
 
 void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* body_name,
@@ -42,17 +42,27 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 		body_pos = flapping_model::tail_pos;
 	}
 	auto V_inertial = CalcPointVelocity(model, Q, QDot, body_id, body_pos, true);
+	// std::cout << "V_inertial: " << V_inertial.transpose() << std::endl;
+
 	auto MatWorld2Body = CalcBodyWorldOrientation(model, Q, body_id, false);
 	auto V_local = MatWorld2Body * V_inertial;// CalcBodyWorldOrientation
+	// std::cout << "V_local: " << V_local.transpose() << std::endl;
+
 	Vector3d V_local_proj{V_local[0], 0, V_local[2]};
+	double x = V_local[2] / V_local[0];
 	double angle_of_attack;
 	if(V_local[0] == 0){
-		double angle_of_attack = atan(INFINITY);
+		angle_of_attack = atan(INFINITY);
 	}
 	else{
-		double angle_of_attack = atan(V_local[2] / V_local[0]);
+		angle_of_attack = atan(x);
 	}
+	
 	double C_l = flapping_model::C_l0 * std::sin(2 * angle_of_attack);
+	// std::cout << "////: " << x << std::endl;
+	// std::cout << "angle: " << atan(x) << std::endl;
+	// std::cout << "angle_of_attack: " << angle_of_attack << std::endl;
+	// std::cout << "C_L: " << C_l << std::endl;
 	double C_d = flapping_model::D_l0 - flapping_model::D_l1 * std::cos(2 * angle_of_attack);
 	double F_l = 2.0 / 3.0 * C_l * flapping_model::p * area * (V_local_proj.norm() * V_local_proj.norm());
 	double F_d = 2.0 / 3.0 * C_d * flapping_model::p * area * (V_local_proj.norm() * V_local_proj.norm());
@@ -129,6 +139,8 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	CalF(*model, Q, QDot, "left_wing", fext, rotate_y);
 	CalF(*model, Q, QDot, "right_wing", fext, rotate_y);
 	CalF(*model, Q, QDot, "tail", fext, rotate_y);
+	// std::cout << "tail force: " << fext[model->GetBodyId("tail")] << std::endl;
+	// std::cout << "wing force: " << fext[model->GetBodyId("right_wing")] << std::endl;
 
 	// std::cout << "body size: " << model->mBodies.size() << std::endl;
 	// std::cout << "left: " << model->GetBodyId("left") << std::endl;
@@ -138,6 +150,7 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	// std::cout << "tail: " << model->GetBodyId("tail") << std::endl;
 
 	ForwardDynamics (*model, Q, QDot, Tau, QDDot, &fext);
+	// ForwardDynamics (*model, Q, QDot, Tau, QDDot);
 	// InverseDynamics (*model, Q, QDot, QDDot, Tau);
 	// std::cout << "QDDot: " << QDDot.transpose() << std::endl;
 

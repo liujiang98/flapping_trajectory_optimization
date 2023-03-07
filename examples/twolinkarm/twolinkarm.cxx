@@ -39,7 +39,7 @@ adouble integrand_cost(adouble* states, adouble* controls,
                        int iphase, Workspace* workspace)
 {
     adouble u = controls[0];
-    return  u * u;
+    return  0.5*u * u;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,8 @@ void dae(adouble* derivatives, adouble* path, adouble* states,
     vector<adouble> x{states[0], states[1], states[2], 
                     states[3], states[4], states[5], states[6], states[7]};
 
-    adouble u = controls[ 0 ];
+    adouble u = controls[0];
+    // std::cout << u.value() << std::endl;
     VectorNd QDDot;
     adouble t = time;
     urdfRead(x, u, QDDot, t);
@@ -187,8 +188,8 @@ int main(void)
     problem.phases(1).bounds.upper.states(6) = 10.0;
     problem.phases(1).bounds.upper.states(7) = 10.0;
 
-    problem.phases(1).bounds.lower.controls(0) = -1.0;
-    problem.phases(1).bounds.upper.controls(0) = 1.0;
+    problem.phases(1).bounds.lower.controls(0) = -5.0;
+    problem.phases(1).bounds.upper.controls(0) = 5.0;
 
     problem.phases(1).bounds.lower.events(0) = 0.0;
     problem.phases(1).bounds.lower.events(1) = 0.0;
@@ -197,8 +198,8 @@ int main(void)
     problem.phases(1).bounds.lower.events(4) = 0.0;
     problem.phases(1).bounds.lower.events(5) = 0.0;
     problem.phases(1).bounds.lower.events(6) = 0.0;
-    problem.phases(1).bounds.lower.events(7) = -0.2;
-    problem.phases(1).bounds.lower.events(8) = -0.1;
+    problem.phases(1).bounds.lower.events(7) = -0.5;
+    problem.phases(1).bounds.lower.events(8) = -0.5;
 
     problem.phases(1).bounds.upper.events(0) = 0.0;
     problem.phases(1).bounds.upper.events(1) = 0.0;
@@ -207,8 +208,8 @@ int main(void)
     problem.phases(1).bounds.upper.events(4) = 0.0;
     problem.phases(1).bounds.upper.events(5) = 0.0;
     problem.phases(1).bounds.upper.events(6) = 0.0;
-    problem.phases(1).bounds.upper.events(7) = 0.2;
-    problem.phases(1).bounds.upper.events(8) = 0.1;
+    problem.phases(1).bounds.upper.events(7) = 0.5;
+    problem.phases(1).bounds.upper.events(8) = 0.5;
 
 
 
@@ -291,9 +292,9 @@ int main(void)
 ///////////  Plot some results if desired (requires gnuplot) ///////////////
 ////////////////////////////////////////////////////////////////////////////
 
-    plot(t,x,problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4");
+    plot(t,x,problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4 x5 x6 x7 x8");
 
-    plot(t,u,problem.name + ": controls", "time (s)", "controls", "u1 u2");
+    plot(t,u,problem.name + ": controls", "time (s)", "controls", "u");
 
 
     plot(t,x,problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4",
