@@ -4,6 +4,7 @@
  *
  * Licensed under the zlib license. See LICENSE for more details.
  */
+#pragma once
 
 #include <iostream>
 #include <cmath>
@@ -27,13 +28,13 @@ namespace flapping_model{
 	const double D_l1 = -1.639;
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
 	const Vector3d tail_pos{-0.10905, 0.0, 0.02466};
-	const double v0 = 9.0;
+	const double v0 = 4.0;
     const double target_height = 0.8;
 	const double f = 10.0; // 扑翼频率
 };
 
 void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* body_name,
-			std::vector<SpatialVector>& fext, const Matrix3d& rotate_y){
+			std::vector<SpatialVector>& fext){
 	int body_id = model.GetBodyId(body_name);
 	double area = flapping_model::wing_area;
 	Vector3d body_pos = flapping_model::wing_pos;
@@ -41,35 +42,38 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 		area = flapping_model::tail_area;
 		body_pos = flapping_model::tail_pos;
 	}
-	auto V_inertial = CalcPointVelocity(model, Q, QDot, body_id, body_pos, true);
+	Vector3d V_inertial = CalcPointVelocity(model, Q, QDot, body_id, body_pos, true);
 	// std::cout << "V_inertial: " << V_inertial.transpose() << std::endl;
-	auto MatWorld2Body = CalcBodyWorldOrientation(model, Q, body_id, true);
+	Matrix3d MatWorld2Body = CalcBodyWorldOrientation(model, Q, body_id, true);
 	Eigen::Quaterniond q(MatWorld2Body);
 	MatWorld2Body = q.normalized().toRotationMatrix();
 
-	auto V_local = MatWorld2Body * V_inertial;// CalcBodyWorldOrientation
+	Vector3d V_local = MatWorld2Body * V_inertial;// CalcBodyWorldOrientation
 	// std::cout << "V_local: " << V_local.transpose() << std::endl;
 
 	Vector3d V_local_proj{V_local[0], 0, V_local[2]};
 	double x = V_local[2] / V_local[0];
 	double angle_of_attack;
-	if(V_local[0] == 0){
+	if(V_local[0] == 0.0){
 		angle_of_attack = atan(INFINITY);
 	}
 	else{
 		angle_of_attack = abs(atan(x));
 	}
-
+	Matrix3d rotate_y;
+	rotate_y << 0, 0, -1, 0, 1, 0, 1, 0, 0;
+	if(V_local[2] > 0.0){
+		rotate_y(0, 2) = 1;
+		rotate_y(2, 0) = -1;
+	}
 	double C_l = flapping_model::C_l0 * std::sin(2 * angle_of_attack);
 	double C_d = flapping_model::D_l0 - flapping_model::D_l1 * std::cos(2 * angle_of_attack);
-	// double C_l = abs(flapping_model::C_l0 * std::sin(angle_of_attack));
-	// double C_d = flapping_model::D_l0 - flapping_model::D_l1 * std::cos(angle_of_attack);
 	double F_l = 2.0 / 3.0 * C_l * flapping_model::p * area * (V_local_proj.norm() * V_local_proj.norm());
 	double F_d = 2.0 / 3.0 * C_d * flapping_model::p * area * (V_local_proj.norm() * V_local_proj.norm());
 	// std::cout << "V: " << V_local_proj.norm() << std::endl;
 	// std::cout << "F_l: " << F_l << std::endl;
 	// std::cout << "F_d: " << F_d << std::endl;
-	// auto pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
+	// Vector3d pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
 	// std::cout << "pos: " << pos << std::endl;
 	Matrix3d D;
 	// D << 0, -pos[2], pos[1], pos[2], 0, -pos[0], -pos[1], pos[0], 0;
@@ -77,11 +81,11 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 
 	// auto F = F_l * MatWorld2Body.transpose() * (rotate_y * V_local_proj.normalized())
 	// 		- F_d * ((MatWorld2Body.transpose() * V_local_proj).normalized());
-	auto F = F_l * (rotate_y * V_local_proj.normalized()) - F_d * V_local_proj.normalized();
+	Vector3d F = F_l * (rotate_y * V_local_proj.normalized()) - F_d * V_local_proj.normalized();
 	// std::cout << "1: " << F_d * (MatWorld2Body.transpose() * V_local_proj).normalized() << std::endl;
 	// std::cout << "2: " << F_d * ((MatWorld2Body.transpose() * V_local_proj).normalized()) << std::endl;
 	// std::cout << "F: " << F.transpose() << std::endl;
-	auto T = D * F;
+	Vector3d T = D * F;
 	// std::cout << "T: " << T << std::endl;
 	fext[body_id][0] = T[0];
 	fext[body_id][1] = T[1];
@@ -105,14 +109,14 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	// std::cout << "///////////////double t: " << time << std::endl;
 	double theta1 = 0.806 * std::sin(flapping_model::f * 2.0 * 3.1415 * time) + 0.241;
 	double theta3 = -0.806 * std::sin(flapping_model::f * 2.0 * 3.1415 * time) - 0.241;
-	double theta2 = 0.174 * std::sin(flapping_model::f * 2.0 * 3.1415 * time + 3.1415 / 2.0);
+	double theta2 = 0.35 * std::sin(flapping_model::f * 2.0 * 3.1415 * time + 3.1415 / 2.0);
 	double theta4 = theta2;
 	// std::cout << "theta1: " << theta1 << std::endl;
 	double theta1_dot = flapping_model::f * 2.0 * 3.1415 * 0.806 * 
 						std::cos(flapping_model::f * 2.0 * 3.1415 * time);
 	double theta3_dot = -0.806 * flapping_model::f * 2.0 * 3.1415 * 
 						std::cos(flapping_model::f * 2.0 * 3.1415 * time);
-	double theta2_dot = flapping_model::f * 2.0 * 3.1415 * 0.174 * 
+	double theta2_dot = flapping_model::f * 2.0 * 3.1415 * 0.35 *
 						std::cos(flapping_model::f * 2.0 * 3.1415 * time + 3.1415 / 2.0);
 	double theta4_dot = theta2_dot;
 	VectorNd Q = VectorNd::Zero (model->q_size);
@@ -134,11 +138,9 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	for (unsigned int i = 0; i < fext.size(); ++i) {
 		fext[i]=RigidBodyDynamics::Math::SpatialVector::Zero();
 	}
-	Matrix3d rotate_y;
-	rotate_y << 0, 0, -1, 0, 1, 0, 1, 0, 0;
-	CalF(*model, Q, QDot, "left_wing", fext, rotate_y);
-	CalF(*model, Q, QDot, "right_wing", fext, rotate_y);
-	CalF(*model, Q, QDot, "tail", fext, rotate_y);
+	CalF(*model, Q, QDot, "left_wing", fext);
+	CalF(*model, Q, QDot, "right_wing", fext);
+	CalF(*model, Q, QDot, "tail", fext);
 	// std::cout << "tail force: " << fext[model->GetBodyId("tail")].transpose() << std::endl;
 	// std::cout << "right wing force: " << fext[model->GetBodyId("right_wing")].transpose() << std::endl;
 	// std::cout << "left wing force: " << fext[model->GetBodyId("left_wing")].transpose() << std::endl;

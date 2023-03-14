@@ -140,7 +140,7 @@ int main(void)
 /////////////////////////////////////////////////////////////////////////////
 /////////   Define phase related information & do level 2 setup /////////////
 /////////////////////////////////////////////////////////////////////////////
-    int nodes_num = 200;
+    int nodes_num = 300;
     problem.phases(1).nstates   				= 8;
     problem.phases(1).ncontrols 				= 1;
     problem.phases(1).nevents   				= 10;
@@ -187,8 +187,8 @@ int main(void)
     problem.phases(1).bounds.lower.events(2) = 0.0;
     problem.phases(1).bounds.lower.events(3) = -0.17453;
     problem.phases(1).bounds.lower.events(4) = 0.0;
-    problem.phases(1).bounds.lower.events(5) = 0.0;
-    problem.phases(1).bounds.lower.events(6) = 0.0;
+    problem.phases(1).bounds.lower.events(5) = -0.1;
+    problem.phases(1).bounds.lower.events(6) = -0.1;
     problem.phases(1).bounds.lower.events(7) = 0.0;
     problem.phases(1).bounds.lower.events(8) = flapping_model::target_height - 0.1;
     problem.phases(1).bounds.lower.events(9) = -0.1;
@@ -198,8 +198,8 @@ int main(void)
     problem.phases(1).bounds.upper.events(2) = 0.0;
     problem.phases(1).bounds.upper.events(3) = -0.17453;
     problem.phases(1).bounds.upper.events(4) = 0.0;
-    problem.phases(1).bounds.upper.events(5) = 0.0;
-    problem.phases(1).bounds.upper.events(6) = 0.0;
+    problem.phases(1).bounds.upper.events(5) = 0.1;
+    problem.phases(1).bounds.upper.events(6) = 0.1;
     problem.phases(1).bounds.upper.events(7) = 0.0;
     problem.phases(1).bounds.upper.events(8) = flapping_model::target_height + 0.1;
     problem.phases(1).bounds.upper.events(9) = 0.1;
@@ -233,16 +233,16 @@ int main(void)
 
     MatrixXd x0(8,nodes_num);
 
-    x0 <<  linspace(-0.35, 0.0, nodes_num),
+    x0 <<  linspace(-0.0, 0.0, nodes_num),
            linspace(0.0, 10.0, nodes_num),
            linspace(0.0, flapping_model::target_height, nodes_num),
            linspace(-0.17453, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num),
-           linspace(0.1 * flapping_model::v0, 0.0, nodes_num),
+           linspace(0.0, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num);
 
-    problem.phases(1).guess.controls       = linspace(-0.0, 0.0, nodes_num);
+    problem.phases(1).guess.controls       = linspace(0.0, 0.0, nodes_num);
     problem.phases(1).guess.states         = x0;
     problem.phases(1).guess.time           = linspace(0.0, 10.0, nodes_num);
 
@@ -254,9 +254,10 @@ int main(void)
     algorithm.nlp_method                  = "IPOPT";
     algorithm.scaling                     = "automatic";
     algorithm.derivatives                 = "automatic";
-    algorithm.nlp_iter_max                = 1000;
+    algorithm.nlp_iter_max                = 4000;
     algorithm.nlp_tolerance               = 1.e-2;
     algorithm.collocation_method          = "Hermite-Simpson";
+    algorithm.ipopt_max_cpu_time          = 7200.0;
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////  Now call PSOPT to solve the problem   /////////////////
