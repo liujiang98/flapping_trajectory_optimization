@@ -165,19 +165,19 @@ int main(void)
     problem.phases(1).bounds.lower.states(1) = 0.0;
     problem.phases(1).bounds.lower.states(2) = 0.0;
     problem.phases(1).bounds.lower.states(3) = -1.047;
-    // problem.phases(1).bounds.lower.states(4) = -6.0;
-    // problem.phases(1).bounds.lower.states(5) = 0.0;
-    // problem.phases(1).bounds.lower.states(6) = -3.0;
-    // problem.phases(1).bounds.lower.states(7) = -10.0;
+    problem.phases(1).bounds.lower.states(4) = -6.0;
+    problem.phases(1).bounds.lower.states(5) = 0.0;
+    problem.phases(1).bounds.lower.states(6) = -10.0;
+    problem.phases(1).bounds.lower.states(7) = -100.0;
 
     problem.phases(1).bounds.upper.states(0) = PSOPT::pi / 2.0;
     problem.phases(1).bounds.upper.states(1) = 10;
     problem.phases(1).bounds.upper.states(2) = 2 * flapping_model::target_height;
     problem.phases(1).bounds.upper.states(3) = 1.047;
-    // problem.phases(1).bounds.upper.states(4) = 6.0;
-    // problem.phases(1).bounds.upper.states(5) = 10.0;
-    // problem.phases(1).bounds.upper.states(6) = 3.0;
-    // problem.phases(1).bounds.upper.states(7) = 10.0;
+    problem.phases(1).bounds.upper.states(4) = 6.0;
+    problem.phases(1).bounds.upper.states(5) = 20.0;
+    problem.phases(1).bounds.upper.states(6) = 20.0;
+    problem.phases(1).bounds.upper.states(7) = 100.0;
 
     problem.phases(1).bounds.lower.controls(0) = -10.0;
     problem.phases(1).bounds.upper.controls(0) = 10.0;
@@ -185,7 +185,7 @@ int main(void)
     problem.phases(1).bounds.lower.events(0) = -PSOPT::pi / 2.0;
     problem.phases(1).bounds.lower.events(1) = 0.0;
     problem.phases(1).bounds.lower.events(2) = 0.0;
-    problem.phases(1).bounds.lower.events(3) = -0.17453;
+    problem.phases(1).bounds.lower.events(3) = -0.0;
     problem.phases(1).bounds.lower.events(4) = 0.0;
     problem.phases(1).bounds.lower.events(5) = -0.1;
     problem.phases(1).bounds.lower.events(6) = -0.1;
@@ -196,7 +196,7 @@ int main(void)
     problem.phases(1).bounds.upper.events(0) = 0.0;
     problem.phases(1).bounds.upper.events(1) = 0.0;
     problem.phases(1).bounds.upper.events(2) = 0.0;
-    problem.phases(1).bounds.upper.events(3) = -0.17453;
+    problem.phases(1).bounds.upper.events(3) = -0.0;
     problem.phases(1).bounds.upper.events(4) = 0.0;
     problem.phases(1).bounds.upper.events(5) = 0.1;
     problem.phases(1).bounds.upper.events(6) = 0.1;
@@ -233,13 +233,13 @@ int main(void)
 
     MatrixXd x0(8,nodes_num);
 
-    x0 <<  linspace(-0.0, 0.0, nodes_num),
+    x0 <<  linspace(-0.35, -0.35, nodes_num),
            linspace(0.0, 10.0, nodes_num),
            linspace(0.0, flapping_model::target_height, nodes_num),
-           linspace(-0.17453, 0.0, nodes_num),
+           linspace(-0.0, 0.35, nodes_num),
            linspace(0.0, 0.0, nodes_num),
-           linspace(0.0, 0.0, nodes_num),
-           linspace(0.0, 0.0, nodes_num),
+           linspace(0.5 * flapping_model::v0, 0.5 * flapping_model::v0, nodes_num),
+           linspace(0.5 * flapping_model::v0, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num);
 
     problem.phases(1).guess.controls       = linspace(0.0, 0.0, nodes_num);
@@ -254,10 +254,10 @@ int main(void)
     algorithm.nlp_method                  = "IPOPT";
     algorithm.scaling                     = "automatic";
     algorithm.derivatives                 = "automatic";
-    algorithm.nlp_iter_max                = 4000;
+    algorithm.nlp_iter_max                = 2000;
     algorithm.nlp_tolerance               = 1.e-2;
     algorithm.collocation_method          = "Hermite-Simpson";
-    algorithm.ipopt_max_cpu_time          = 7200.0;
+    // algorithm.ipopt_max_cpu_time          = 7200.0;
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////  Now call PSOPT to solve the problem   /////////////////

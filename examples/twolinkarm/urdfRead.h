@@ -28,7 +28,7 @@ namespace flapping_model{
 	const double D_l1 = -1.639;
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
 	const Vector3d tail_pos{-0.10905, 0.0, 0.02466};
-	const double v0 = 4.0;
+	const double v0 = 6.0;
     const double target_height = 0.8;
 	const double f = 10.0; // 扑翼频率
 };
@@ -42,12 +42,18 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 		area = flapping_model::tail_area;
 		body_pos = flapping_model::tail_pos;
 	}
+
+	// 惯性系下的速度
 	Vector3d V_inertial = CalcPointVelocity(model, Q, QDot, body_id, body_pos, true);
 	// std::cout << "V_inertial: " << V_inertial.transpose() << std::endl;
+
 	Matrix3d MatWorld2Body = CalcBodyWorldOrientation(model, Q, body_id, true);
 	Eigen::Quaterniond q(MatWorld2Body);
+
+	// 从惯性系到body(local)系下的旋转矩阵
 	MatWorld2Body = q.normalized().toRotationMatrix();
 
+	// body(local)系下的速度
 	Vector3d V_local = MatWorld2Body * V_inertial;// CalcBodyWorldOrientation
 	// std::cout << "V_local: " << V_local.transpose() << std::endl;
 
@@ -73,19 +79,21 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 	// std::cout << "V: " << V_local_proj.norm() << std::endl;
 	// std::cout << "F_l: " << F_l << std::endl;
 	// std::cout << "F_d: " << F_d << std::endl;
-	// Vector3d pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
-	// std::cout << "pos: " << pos << std::endl;
-	Matrix3d D;
-	// D << 0, -pos[2], pos[1], pos[2], 0, -pos[0], -pos[1], pos[0], 0;
-	D << 0, -body_pos[2], body_pos[1], body_pos[2], 0, -body_pos[0], -body_pos[1], body_pos[0], 0;
 
-	// auto F = F_l * MatWorld2Body.transpose() * (rotate_y * V_local_proj.normalized())
-	// 		- F_d * ((MatWorld2Body.transpose() * V_local_proj).normalized());
-	Vector3d F = F_l * (rotate_y * V_local_proj.normalized()) - F_d * V_local_proj.normalized();
+	// body上的点在惯性系下的位置
+	Vector3d pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
+	// std::cout << "pos: " << pos << std::endl;
+
+	// 惯性系下的外力
+	Vector3d F = F_l * MatWorld2Body.transpose() * (rotate_y * V_local_proj.normalized())
+			- F_d * ((MatWorld2Body.transpose() * V_local_proj).normalized());
+	// Vector3d F = F_l * (rotate_y * V_local_proj.normalized()) - F_d * V_local_proj.normalized();
 	// std::cout << "1: " << F_d * (MatWorld2Body.transpose() * V_local_proj).normalized() << std::endl;
 	// std::cout << "2: " << F_d * ((MatWorld2Body.transpose() * V_local_proj).normalized()) << std::endl;
 	// std::cout << "F: " << F.transpose() << std::endl;
-	Vector3d T = D * F;
+
+	// 惯性系下的力矩
+	Vector3d T = pos.cross(F);
 	// std::cout << "T: " << T << std::endl;
 	fext[body_id][0] = T[0];
 	fext[body_id][1] = T[1];
@@ -104,14 +112,11 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 		abort();
 	}
 
-	// std::cout << "t: " << t << std::endl;
 	double time = t.value();
-	// std::cout << "///////////////double t: " << time << std::endl;
 	double theta1 = 0.806 * std::sin(flapping_model::f * 2.0 * 3.1415 * time) + 0.241;
 	double theta3 = -0.806 * std::sin(flapping_model::f * 2.0 * 3.1415 * time) - 0.241;
 	double theta2 = 0.35 * std::sin(flapping_model::f * 2.0 * 3.1415 * time + 3.1415 / 2.0);
 	double theta4 = theta2;
-	// std::cout << "theta1: " << theta1 << std::endl;
 	double theta1_dot = flapping_model::f * 2.0 * 3.1415 * 0.806 * 
 						std::cos(flapping_model::f * 2.0 * 3.1415 * time);
 	double theta3_dot = -0.806 * flapping_model::f * 2.0 * 3.1415 * 
@@ -147,7 +152,6 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 
 	ForwardDynamics (*model, Q, QDot, Tau, QDDot, &fext);
 	// ForwardDynamics (*model, Q, QDot, Tau, QDDot);
-	// InverseDynamics (*model, Q, QDot, QDDot, Tau);
 	// std::cout << "QDDot: " << QDDot.transpose() << std::endl;
 
 	delete model;
