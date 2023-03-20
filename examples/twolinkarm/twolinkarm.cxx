@@ -167,7 +167,7 @@ int main(void)
     problem.phases(1).bounds.lower.states(3) = -1.047;
     problem.phases(1).bounds.lower.states(4) = -6.0;
     problem.phases(1).bounds.lower.states(5) = 0.0;
-    problem.phases(1).bounds.lower.states(6) = -10.0;
+    problem.phases(1).bounds.lower.states(6) = -5.0;
     problem.phases(1).bounds.lower.states(7) = -100.0;
 
     problem.phases(1).bounds.upper.states(0) = PSOPT::pi / 2.0;
@@ -175,8 +175,8 @@ int main(void)
     problem.phases(1).bounds.upper.states(2) = 2 * flapping_model::target_height;
     problem.phases(1).bounds.upper.states(3) = 1.047;
     problem.phases(1).bounds.upper.states(4) = 6.0;
-    problem.phases(1).bounds.upper.states(5) = 20.0;
-    problem.phases(1).bounds.upper.states(6) = 20.0;
+    problem.phases(1).bounds.upper.states(5) = 5.0;
+    problem.phases(1).bounds.upper.states(6) = 5.0;
     problem.phases(1).bounds.upper.states(7) = 100.0;
 
     problem.phases(1).bounds.lower.controls(0) = -10.0;
@@ -209,7 +209,7 @@ int main(void)
     problem.phases(1).bounds.lower.StartTime    = 0.0;
     problem.phases(1).bounds.upper.StartTime    = 0.0;
 
-    problem.phases(1).bounds.lower.EndTime      = 1.0;
+    problem.phases(1).bounds.lower.EndTime      = 2.0;
     problem.phases(1).bounds.upper.EndTime      = 10.0;
 
 
@@ -234,15 +234,15 @@ int main(void)
     MatrixXd x0(8,nodes_num);
 
     x0 <<  linspace(-0.35, -0.35, nodes_num),
-           linspace(0.0, 10.0, nodes_num),
+           linspace(0.0, 2.0, nodes_num),
            linspace(0.0, flapping_model::target_height, nodes_num),
-           linspace(-0.0, 0.35, nodes_num),
+           linspace(-0.0, 1.0, nodes_num),
            linspace(0.0, 0.0, nodes_num),
            linspace(0.5 * flapping_model::v0, 0.5 * flapping_model::v0, nodes_num),
            linspace(0.5 * flapping_model::v0, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num);
 
-    problem.phases(1).guess.controls       = linspace(0.0, 0.0, nodes_num);
+    problem.phases(1).guess.controls       = linspace(0.01, 0.0, nodes_num);
     problem.phases(1).guess.states         = x0;
     problem.phases(1).guess.time           = linspace(0.0, 10.0, nodes_num);
 
@@ -254,7 +254,7 @@ int main(void)
     algorithm.nlp_method                  = "IPOPT";
     algorithm.scaling                     = "automatic";
     algorithm.derivatives                 = "automatic";
-    algorithm.nlp_iter_max                = 2000;
+    algorithm.nlp_iter_max                = 1000;
     algorithm.nlp_tolerance               = 1.e-2;
     algorithm.collocation_method          = "Hermite-Simpson";
     // algorithm.ipopt_max_cpu_time          = 7200.0;

@@ -28,9 +28,9 @@ namespace flapping_model{
 	const double D_l1 = -1.639;
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
 	const Vector3d tail_pos{-0.10905, 0.0, 0.02466};
-	const double v0 = 6.0;
+	const double v0 = 3.0;
     const double target_height = 0.8;
-	const double f = 10.0; // 扑翼频率
+	const double f = 12.0; // 扑翼频率
 };
 
 void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* body_name,
