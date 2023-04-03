@@ -140,7 +140,7 @@ int main(void)
 /////////////////////////////////////////////////////////////////////////////
 /////////   Define phase related information & do level 2 setup /////////////
 /////////////////////////////////////////////////////////////////////////////
-    int nodes_num = 300;
+    int nodes_num = 1000;
     problem.phases(1).nstates   				= 8;
     problem.phases(1).ncontrols 				= 1;
     problem.phases(1).nevents   				= 10;
@@ -185,32 +185,32 @@ int main(void)
     problem.phases(1).bounds.lower.events(0) = -PSOPT::pi / 2.0;
     problem.phases(1).bounds.lower.events(1) = 0.0;
     problem.phases(1).bounds.lower.events(2) = 0.0;
-    problem.phases(1).bounds.lower.events(3) = -0.0;
-    problem.phases(1).bounds.lower.events(4) = 0.0;
+    // problem.phases(1).bounds.lower.events(3) = -0.0;
+    // problem.phases(1).bounds.lower.events(4) = 0.0;
     problem.phases(1).bounds.lower.events(5) = -0.1;
     problem.phases(1).bounds.lower.events(6) = -0.1;
-    problem.phases(1).bounds.lower.events(7) = 0.0;
+    // problem.phases(1).bounds.lower.events(7) = 0.0;
     problem.phases(1).bounds.lower.events(8) = flapping_model::target_height - 0.1;
-    problem.phases(1).bounds.lower.events(9) = -0.1;
+    problem.phases(1).bounds.lower.events(9) = -0.5;
     
     problem.phases(1).bounds.upper.events(0) = 0.0;
     problem.phases(1).bounds.upper.events(1) = 0.0;
     problem.phases(1).bounds.upper.events(2) = 0.0;
-    problem.phases(1).bounds.upper.events(3) = -0.0;
-    problem.phases(1).bounds.upper.events(4) = 0.0;
+    // problem.phases(1).bounds.upper.events(3) = -0.0;
+    // problem.phases(1).bounds.upper.events(4) = 0.0;
     problem.phases(1).bounds.upper.events(5) = 0.1;
     problem.phases(1).bounds.upper.events(6) = 0.1;
-    problem.phases(1).bounds.upper.events(7) = 0.0;
+    // problem.phases(1).bounds.upper.events(7) = 0.0;
     problem.phases(1).bounds.upper.events(8) = flapping_model::target_height + 0.1;
-    problem.phases(1).bounds.upper.events(9) = 0.1;
+    problem.phases(1).bounds.upper.events(9) = 0.5;
 
 
 
     problem.phases(1).bounds.lower.StartTime    = 0.0;
     problem.phases(1).bounds.upper.StartTime    = 0.0;
 
-    problem.phases(1).bounds.lower.EndTime      = 2.0;
-    problem.phases(1).bounds.upper.EndTime      = 10.0;
+    problem.phases(1).bounds.lower.EndTime      = 0.8;
+    problem.phases(1).bounds.upper.EndTime      = 5.0;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -242,7 +242,7 @@ int main(void)
            linspace(0.5 * flapping_model::v0, 0.0, nodes_num),
            linspace(0.0, 0.0, nodes_num);
 
-    problem.phases(1).guess.controls       = linspace(0.01, 0.0, nodes_num);
+    problem.phases(1).guess.controls       = linspace(0.0, 0.0, nodes_num);
     problem.phases(1).guess.states         = x0;
     problem.phases(1).guess.time           = linspace(0.0, 10.0, nodes_num);
 
@@ -254,7 +254,7 @@ int main(void)
     algorithm.nlp_method                  = "IPOPT";
     algorithm.scaling                     = "automatic";
     algorithm.derivatives                 = "automatic";
-    algorithm.nlp_iter_max                = 1000;
+    algorithm.nlp_iter_max                = 2000;
     algorithm.nlp_tolerance               = 1.e-2;
     algorithm.collocation_method          = "Hermite-Simpson";
     // algorithm.ipopt_max_cpu_time          = 7200.0;
@@ -285,8 +285,9 @@ int main(void)
 ///////////  Plot some results if desired (requires gnuplot) ///////////////
 ////////////////////////////////////////////////////////////////////////////
 
-    plot(t,x,problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4 x5 x6 x7 x8");
-
+    plot(t, x, problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4 x5 x6 x7 x8");
+    plot(t, x.block(0, 0, 4, x.cols()), problem.name + ": states", "time (s)", "states", "x1 x2 x3 x4");
+    plot(t, x.block(4, 0, 4, x.cols()), problem.name + ": states", "time (s)", "states", "x5 x6 x7 x8");
     plot(t,u,problem.name + ": controls", "time (s)", "controls", "u");
 
 

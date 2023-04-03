@@ -82,6 +82,9 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 
 	// body上的点在惯性系下的位置
 	Vector3d pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
+	if(body_id == 7){ // body_id of tail is 7
+		pos[0] = 10.0 * pos[0];
+	}
 	// std::cout << "pos: " << pos << std::endl;
 
 	// 惯性系下的外力
@@ -107,7 +110,7 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	rbdl_check_api_version (RBDL_API_VERSION);
 	Model* model = new Model();
-	if (!Addons::URDFReadFromFile ("/home/lj/new_model/src/urdf/model.urdf", model, true, false)) {
+	if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/model.urdf", model, true, false)) {
 		std::cerr << "Error loading model " << std::endl;
 		abort();
 	}
