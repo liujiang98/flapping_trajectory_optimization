@@ -58,20 +58,20 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 	// std::cout << "V_local: " << V_local.transpose() << std::endl;
 
 	Vector3d V_local_proj{V_local[0], 0, V_local[2]};
-	double x = V_local[2] / V_local[0];
-	double angle_of_attack;
-	if(V_local[0] == 0.0){
+	double x, angle_of_attack;
+	if(V_local[0] == 0){
 		angle_of_attack = atan(INFINITY);
 	}
 	else{
-		angle_of_attack = abs(atan(x));
+		x = V_local[2] / V_local[0];
 	}
+	angle_of_attack = atan(x);
 	Matrix3d rotate_y;
-	rotate_y << 0, 0, -1, 0, 1, 0, 1, 0, 0;
-	if(V_local[2] > 0.0){
-		rotate_y(0, 2) = 1;
-		rotate_y(2, 0) = -1;
-	}
+	rotate_y << 0, 0, 1, 0, 1, 0, -1, 0, 0;
+	// if(V_local[2] > 0.0){
+	// 	rotate_y(0, 2) = 1;
+	// 	rotate_y(2, 0) = -1;
+	// }
 	double C_l = flapping_model::C_l0 * std::sin(2 * angle_of_attack);
 	double C_d = flapping_model::D_l0 - flapping_model::D_l1 * std::cos(2 * angle_of_attack);
 	double F_l = 2.0 / 3.0 * C_l * flapping_model::p * area * (V_local_proj.norm() * V_local_proj.norm());
