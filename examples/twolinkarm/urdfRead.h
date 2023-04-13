@@ -22,15 +22,15 @@ using namespace RigidBodyDynamics::Math;
 namespace flapping_model{
 	const double p = 1.1839;
 	const double wing_area = 0.046;
-	const double tail_area = 0.018;
+	const double tail_area = 0.018; //0.03845369   0.018
 	const double C_l0 = 1.332;
 	const double D_l0 = 1.713;
 	const double D_l1 = -1.639;
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
-	const Vector3d tail_pos{-0.10905, 0.0, 0.02466};
-	const double v0 = 3.0;
+	const Vector3d tail_pos{-0.10905, 0.0, 0.02466}; //-0.2635, 0, 0.0268   -0.10905, 0.0, 0.02466
+	const double v0 = 5.0;
     const double target_height = 0.8;
-	const double f = 12.0; // 扑翼频率
+	const double f = 10.0; // 扑翼频率
 };
 
 void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* body_name,
@@ -82,10 +82,6 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 
 	// body上的点在惯性系下的位置
 	Vector3d pos = CalcBodyToBaseCoordinates(model, Q, body_id, body_pos, true);
-	if(body_id == 7){ // body_id of tail is 7
-		pos[0] = 10.0 * pos[0];
-	}
-	// std::cout << "pos: " << pos << std::endl;
 
 	// 惯性系下的外力
 	Vector3d F = F_l * MatWorld2Body.transpose() * (rotate_y * V_local_proj.normalized())
@@ -110,8 +106,9 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	rbdl_check_api_version (RBDL_API_VERSION);
 	Model* model = new Model();
-	if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/model.urdf", model, true, false)) {
-		std::cerr << "Error loading model " << std::endl;
+	if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/origin_model.urdf",  
+									model, true, false)) {						// flapping_model/src/urdf/origin_model.urdf
+		std::cerr << "Error loading model " << std::endl;						// /long_tail/urdf/origin_long_tail.urdf
 		abort();
 	}
 
