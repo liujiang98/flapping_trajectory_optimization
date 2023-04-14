@@ -28,8 +28,8 @@ namespace flapping_model{
 	const double D_l1 = -1.639;
 	const Vector3d wing_pos{-0.03238, 0.0, 0.0};
 	const Vector3d tail_pos{-0.10905, 0.0, 0.02466}; //-0.2635, 0, 0.0268   -0.10905, 0.0, 0.02466
-	const double v0 = 5.0;
-    const double target_height = 0.8;
+	const double v0 = 6.0;
+    const double target_height = 1.0;
 	const double f = 10.0; // 扑翼频率
 };
 
@@ -103,14 +103,14 @@ void CalF(Model& model, const VectorNd& Q, const VectorNd& QDot, const char* bod
 	// std::cout << "fext: " << fext[body_id].transpose() << std::endl;
 }
 
-void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
-	rbdl_check_api_version (RBDL_API_VERSION);
-	Model* model = new Model();
-	if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/origin_model.urdf",  
-									model, true, false)) {						// flapping_model/src/urdf/origin_model.urdf
-		std::cerr << "Error loading model " << std::endl;						// /long_tail/urdf/origin_long_tail.urdf
-		abort();
-	}
+void SetDynamicParam (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t, Model* model) {
+	// rbdl_check_api_version (RBDL_API_VERSION);
+	// Model* model = new Model();
+	// if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/origin_model.urdf",  
+	// 								model, true, false)) {						// flapping_model/src/urdf/origin_model.urdf
+	// 	std::cerr << "Error loading model " << std::endl;						// /long_tail/urdf/origin_long_tail.urdf
+	// 	abort();
+	// }
 
 	double time = t.value();
 	double theta1 = 0.806 * std::sin(flapping_model::f * 2.0 * 3.1415 * time) + 0.241;
@@ -154,7 +154,7 @@ void urdfRead (vector<adouble> x, adouble u, VectorNd& QDDot, adouble t) {
 	// ForwardDynamics (*model, Q, QDot, Tau, QDDot);
 	// std::cout << "QDDot: " << QDDot.transpose() << std::endl;
 
-	delete model;
+	// delete model;
 
 }
 

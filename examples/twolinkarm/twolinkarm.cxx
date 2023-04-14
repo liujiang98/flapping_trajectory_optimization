@@ -2,6 +2,8 @@
 #include "urdfRead.h"
 #include <cmath>
 
+Model* model = nullptr;
+
 //////////////////////////////////////////////////////////////////////////
 ///////////////////  Define the end point (Mayer) cost function //////////
 //////////////////////////////////////////////////////////////////////////
@@ -35,16 +37,19 @@ void dae(adouble* derivatives, adouble* path, adouble* states,
 {
     vector<adouble> x{states[0], states[1], states[2], 
                     states[3], states[4], states[5], states[6], states[7]};
-    // std::cout << "t: " << time << std::endl;
-    // std::cout << "states: " << states[0] << " " << states[1] << " " << states[2] 
-    //             << " " << states[3] << " " << states[4] << " " << states[5]
-    //             << " " << states[6] << " " << states[7] << std::endl;
     adouble u = controls[0];
-    // std::cout << u.value() << std::endl;
     VectorNd QDDot;
     adouble t = time;
-    urdfRead(x, u, QDDot, t);
-    // std::cout << ++i << std::endl;
+    
+    if (!model) {
+        model = new Model();
+        if (!Addons::URDFReadFromFile ("/home/liujiang/flapping_model/src/urdf/origin_model.urdf",  
+									model, true, false)) {			// flapping_model/src/urdf/origin_model.urdf
+            std::cerr << "Error loading model " << std::endl;		// /long_tail/urdf/origin_long_tail.urdf
+            abort();
+	    }
+    }
+    SetDynamicParam(x, u, QDDot, t, model);
     derivatives[ 0 ] = x[4];
     derivatives[ 1 ] = x[5];
     derivatives[ 2 ] = x[6];
@@ -53,7 +58,6 @@ void dae(adouble* derivatives, adouble* path, adouble* states,
     derivatives[ 5 ] = QDDot[0];
     derivatives[ 6 ] = QDDot[2];
     derivatives[ 7 ] = QDDot[10];
-    // std::cout << "dea: " << QDDot[4] << " " << derivatives[4] << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -74,9 +78,6 @@ void events(adouble* e, adouble* initial_states, adouble* final_states,
    adouble x80 = initial_states[ 7 ];
    adouble pzf = final_states[ 2 ];
    adouble pzf_dot = final_states[ 6 ];
-    //    std::cout << "states: " << initial_states[0] << " " << initial_states[1] << " " << initial_states[2] 
-    //                 << " " << initial_states[3] << " " << initial_states[4] << " " << initial_states[5]
-    //                 << " " << initial_states[6] << " " << initial_states[7] << std::endl;
    e[ 0 ] = x10;
    e[ 1 ] = x20;
    e[ 2 ] = x30;
@@ -87,10 +88,6 @@ void events(adouble* e, adouble* initial_states, adouble* final_states,
    e[ 7 ] = x80;
    e[ 8 ] = pzf;
    e[ 9 ] = pzf_dot;
-//    std::cout << "cos(3.14): " << cos(x) << std::endl;
-//    std::cout << "test: " << x10 << " " << cos(x10) << " " << 
-//                 flapping_model::v0 * cos(x10) << " "
-//                 <<  x60 - flapping_model::v0 * cos(x10) << " "<< e[4] << std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -167,17 +164,17 @@ int main(void)
     problem.phases(1).bounds.lower.states(3) = -1.547;
     problem.phases(1).bounds.lower.states(4) = -6.0;
     problem.phases(1).bounds.lower.states(5) = 0.0;
-    problem.phases(1).bounds.lower.states(6) = -5.0;
-    problem.phases(1).bounds.lower.states(7) = -50.0;
+    problem.phases(1).bounds.lower.states(6) = -3.2;
+    problem.phases(1).bounds.lower.states(7) = -20.0;
 
     problem.phases(1).bounds.upper.states(0) = PSOPT::pi / 2.0;
-    problem.phases(1).bounds.upper.states(1) = 20;
-    problem.phases(1).bounds.upper.states(2) = 2 * flapping_model::target_height;
+    problem.phases(1).bounds.upper.states(1) = 10;
+    problem.phases(1).bounds.upper.states(2) = 3.0;
     problem.phases(1).bounds.upper.states(3) = 1.547;
     problem.phases(1).bounds.upper.states(4) = 6.0;
     problem.phases(1).bounds.upper.states(5) = flapping_model::v0;
-    problem.phases(1).bounds.upper.states(6) = 5.0;
-    problem.phases(1).bounds.upper.states(7) = 50.0;
+    problem.phases(1).bounds.upper.states(6) = 3.2;
+    problem.phases(1).bounds.upper.states(7) = 20.0;
 
     problem.phases(1).bounds.lower.controls(0) = -10.0;
     problem.phases(1).bounds.upper.controls(0) = 10.0;
@@ -191,7 +188,7 @@ int main(void)
     problem.phases(1).bounds.lower.events(6) = -0.0;
     problem.phases(1).bounds.lower.events(7) = 0.0;
     problem.phases(1).bounds.lower.events(8) = flapping_model::target_height - 0.01;
-    problem.phases(1).bounds.lower.events(9) = -0.01;
+    problem.phases(1).bounds.lower.events(9) = -0.05;
     
     problem.phases(1).bounds.upper.events(0) = 0.0;
     problem.phases(1).bounds.upper.events(1) = 0.0;
@@ -202,7 +199,7 @@ int main(void)
     problem.phases(1).bounds.upper.events(6) = 0.0;
     problem.phases(1).bounds.upper.events(7) = 0.0;
     problem.phases(1).bounds.upper.events(8) = flapping_model::target_height + 0.01;
-    problem.phases(1).bounds.upper.events(9) = 0.01;
+    problem.phases(1).bounds.upper.events(9) = 0.05;
 
 
 
@@ -235,7 +232,7 @@ int main(void)
     MatrixXd x0(8,nnodes);
 
     x0 <<  linspace(-0.35, -0.35, nnodes),
-           linspace(0.0, 2.0, nnodes),
+           linspace(0.0, 6.0, nnodes),
            linspace(0.0, flapping_model::target_height, nnodes),
            linspace(-0.0, 1.0, nnodes),
            linspace(0.0, 0.0, nnodes),
@@ -257,8 +254,8 @@ int main(void)
     // algorithm.derivatives                 = "automatic";
     algorithm.derivatives                 = "numerical";
     algorithm.nlp_iter_max                = 1000;
-    algorithm.nlp_tolerance               = 1.e-2;
-    algorithm.ode_tolerance               = 1.e-2;
+    algorithm.nlp_tolerance               = 1.e-3;
+    algorithm.ode_tolerance               = 1.e-3;
     algorithm.collocation_method          = "Hermite-Simpson";
     // algorithm.mesh_refinement             = "automatic";
     algorithm.ipopt_max_cpu_time          = 72000.0;
@@ -269,6 +266,7 @@ int main(void)
 ////////////////////////////////////////////////////////////////////////////
 
     psopt(solution, problem, algorithm);
+    delete model;
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////  Extract relevant variables from solution structure   //////////
